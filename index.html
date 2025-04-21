@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Коэффициенты | The Odds API</title>
+  <title>⚽ Live коэффициенты матчей (EPL)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,55 +57,59 @@
   <div id="error" class="error" style="display:none;"></div>
 
   <script>
-    const API_KEY = '769beff7c0640a3d1ae04448977aca09';
+    document.addEventListener("DOMContentLoaded", function() {
+      const API_KEY = '769beff7c0640a3d1ae04448977aca09';
 
-    async function fetchOdds() {
-      try {
-        const res = await fetch(`https://api.the-odds-api.com/v4/sports/soccer_epl/odds?apiKey=${API_KEY}&regions=eu&markets=h2h&oddsFormat=decimal`);
-        
-        if (!res.ok) throw new Error(await res.text());
+      async function fetchOdds() {
+        try {
+          const res = await fetch(`https://api.the-odds-api.com/v4/sports/soccer_epl/odds?apiKey=${API_KEY}&regions=eu&markets=h2h&oddsFormat=decimal`);
+          
+          if (!res.ok) throw new Error(await res.text());
 
-        const data = await res.json();
-        const table = document.getElementById('matchTable');
-        table.innerHTML = '';
+          const data = await res.json();
+          console.log("Полученные данные:", data);  // Логируем данные для диагностики
 
-        if (!data || data.length === 0) {
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').textContent = 'Нет данных о матчах';
-          return;
+          const table = document.getElementById('matchTable');
+          table.innerHTML = '';
+
+          if (!data || data.length === 0) {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Нет данных о матчах';
+            return;
+          }
+
+          data.forEach(match => {
+            if (!match.teams || !match.bookmakers || match.bookmakers.length === 0) return;
+
+            const teams = match.teams;
+            const bookmaker = match.bookmakers[0];
+            const odds = bookmaker.markets[0]?.outcomes;
+
+            if (!odds || odds.length < 2) return;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${teams[0]} vs ${teams[1]}</td>
+              <td>${bookmaker.title}</td>
+              <td>${odds[0]?.name}: ${odds[0]?.price}</td>
+              <td>${odds[1]?.name}: ${odds[1]?.price}</td>
+            `;
+            table.appendChild(row);
+          });
+
+          document.getElementById('error').style.display = 'none';
+
+        } catch (err) {
+          const errorBox = document.getElementById('error');
+          errorBox.textContent = `Ошибка: ${err.message}`;
+          errorBox.style.display = 'block';
+          console.error('Ошибка при запросе:', err);
         }
-
-        data.forEach(match => {
-          if (!match.teams || !match.bookmakers || match.bookmakers.length === 0) return;
-
-          const teams = match.teams;
-          const bookmaker = match.bookmakers[0];
-          const odds = bookmaker.markets[0]?.outcomes;
-
-          if (!odds || odds.length < 2) return;
-
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${teams[0]} vs ${teams[1]}</td>
-            <td>${bookmaker.title}</td>
-            <td>${odds[0]?.name}: ${odds[0]?.price}</td>
-            <td>${odds[1]?.name}: ${odds[1]?.price}</td>
-          `;
-          table.appendChild(row);
-        });
-
-        document.getElementById('error').style.display = 'none';
-
-      } catch (err) {
-        const errorBox = document.getElementById('error');
-        errorBox.textContent = `Ошибка: ${err.message}`;
-        errorBox.style.display = 'block';
-        console.error('Ошибка при запросе:', err);
       }
-    }
 
-    fetchOdds();
-    setInterval(fetchOdds, 30000); // обновлять каждые 30 сек
+      fetchOdds();
+      setInterval(fetchOdds, 30000); // обновлять каждые 30 сек
+    });
   </script>
 </body>
 </html>
