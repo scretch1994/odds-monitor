@@ -69,12 +69,20 @@
         const table = document.getElementById('matchTable');
         table.innerHTML = '';
 
+        if (!data || data.length === 0) {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = 'Нет данных о матчах';
+          return;
+        }
+
         data.forEach(match => {
+          if (!match.teams || !match.bookmakers || match.bookmakers.length === 0) return;
+
           const teams = match.teams;
           const bookmaker = match.bookmakers[0];
-          if (!bookmaker || !bookmaker.markets.length) return;
+          const odds = bookmaker.markets[0]?.outcomes;
 
-          const odds = bookmaker.markets[0].outcomes;
+          if (!odds || odds.length < 2) return;
 
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -101,4 +109,3 @@
   </script>
 </body>
 </html>
-initial commit
