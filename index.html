@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Коэффициенты | The Odds API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background-color: #1e293b;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    th {
+      background-color: #1e40af;
+    }
+    .error {
+      background-color: #dc2626;
+      color: white;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚽ Live коэффициенты матчей (EPL)</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Матч</th>
+        <th>Букмекер</th>
+        <th>1</th>
+        <th>2</th>
+      </tr>
+    </thead>
+    <tbody id="matchTable">
+      <tr><td colspan="4">Загрузка...</td></tr>
+    </tbody>
+  </table>
+
+  <div id="error" class="error" style="display:none;"></div>
+
+  <script>
+    const API_KEY = '769beff7c0640a3d1ae04448977aca09';
+
+    async function fetchOdds() {
+      try {
+        const res = await fetch(`https://api.the-odds-api.com/v4/sports/soccer_epl/odds?apiKey=${API_KEY}&regions=eu&markets=h2h&oddsFormat=decimal`);
+        
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+        const table = document.getElementById('matchTable');
+        table.innerHTML = '';
+
+        data.forEach(match => {
+          const teams = match.teams;
+          const bookmaker = match.bookmakers[0];
+          if (!bookmaker || !bookmaker.markets.length) return;
+
+          const odds = bookmaker.markets[0].outcomes;
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${teams[0]} vs ${teams[1]}</td>
+            <td>${bookmaker.title}</td>
+            <td>${odds[0]?.name}: ${odds[0]?.price}</td>
+            <td>${odds[1]?.name}: ${odds[1]?.price}</td>
+          `;
+          table.appendChild(row);
+        });
+
+        document.getElementById('error').style.display = 'none';
+
+      } catch (err) {
+        const errorBox = document.getElementById('error');
+        errorBox.textContent = `Ошибка: ${err.message}`;
+        errorBox.style.display = 'block';
+        console.error('Ошибка при запросе:', err);
+      }
+    }
+
+    fetchOdds();
+    setInterval(fetchOdds, 30000); // обновлять каждые 30 сек
+  </script>
+</body>
+</html>
+initial commit
